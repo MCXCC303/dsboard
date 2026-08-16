@@ -1,0 +1,47 @@
+# Rust 构建产物
+target/
+
+# 插件打包产物
+dist/
+
+# 本地 cargo home（工具链缓存）
+.cargo-home/
+
+# 日志
+logs/
+*.log
+
+# 操作系统
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 编辑器 / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 环境变量 / 密钥
+.env
+.env.*
+!.env.example
+
+# Rust 备份
+**/*.rs.bk
+
+# 防止构建产物散落根目录（可选）
+/*.wasm
+
+# 根目录 .gitignore 的 config.toml 规则会误伤此文件,显式重新包含
+!.cargo/config.toml
