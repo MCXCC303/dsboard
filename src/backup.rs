@@ -42,10 +42,7 @@ pub fn apply_backup(bytes: &[u8]) -> Result<String, String> {
     let file: BackupFile =
         serde_json::from_slice(bytes).map_err(|e| format!("备份文件不是有效 JSON: {e}"))?;
     if file.kind != BACKUP_KIND {
-        return Err(format!(
-            "不是本插件的备份文件(kind={})",
-            file.kind
-        ));
+        return Err(format!("不是本插件的备份文件(kind={})", file.kind));
     }
     if file.version != BACKUP_VERSION {
         return Err(format!(

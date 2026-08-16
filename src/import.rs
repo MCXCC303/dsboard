@@ -9,11 +9,24 @@ use crate::dates;
 use crate::state::{self, DayModelUsage};
 
 pub const AMOUNT_HEADER: &[&str] = &[
-    "user_id", "start_time_iso", "end_time_iso", "model", "api_key_name",
-    "api_key", "type", "price", "amount",
+    "user_id",
+    "start_time_iso",
+    "end_time_iso",
+    "model",
+    "api_key_name",
+    "api_key",
+    "type",
+    "price",
+    "amount",
 ];
 pub const COST_HEADER: &[&str] = &[
-    "user_id", "start_time_iso", "end_time_iso", "model", "wallet_type", "cost", "currency",
+    "user_id",
+    "start_time_iso",
+    "end_time_iso",
+    "model",
+    "wallet_type",
+    "cost",
+    "currency",
 ];
 
 pub const TYPE_HIT: &str = "input_cache_hit_tokens";
@@ -54,8 +67,12 @@ struct CostLine {
 
 /// 导入平台导出的用量 zip(内存字节)。
 /// 返回 (涉及天数, 模型数, 替换行数)。
-pub fn import_zip_bytes(bytes: &[u8], tz_offset_min: i32) -> Result<(usize, usize, usize), ImportError> {
-    let mut archive = zip::ZipArchive::new(Cursor::new(bytes)).map_err(|e| ImportError::Zip(e.to_string()))?;
+pub fn import_zip_bytes(
+    bytes: &[u8],
+    tz_offset_min: i32,
+) -> Result<(usize, usize, usize), ImportError> {
+    let mut archive =
+        zip::ZipArchive::new(Cursor::new(bytes)).map_err(|e| ImportError::Zip(e.to_string()))?;
 
     let mut amount_text: Option<String> = None;
     let mut cost_text: Option<String> = None;
@@ -97,7 +114,10 @@ pub fn import_zip_bytes(bytes: &[u8], tz_offset_min: i32) -> Result<(usize, usiz
     Ok((days.len(), models.len(), replaced))
 }
 
-fn read_entry_text(archive: &mut zip::ZipArchive<Cursor<&[u8]>>, i: usize) -> Result<String, ImportError> {
+fn read_entry_text(
+    archive: &mut zip::ZipArchive<Cursor<&[u8]>>,
+    i: usize,
+) -> Result<String, ImportError> {
     let mut entry = archive
         .by_index(i)
         .map_err(|e| ImportError::Zip(e.to_string()))?;
@@ -133,12 +153,19 @@ fn parse_amount_csv(text: &str, tz_offset_min: i32) -> Result<Vec<AmountLine>, I
         if !price.is_empty() && price.parse::<f64>().is_err() {
             return Err(row_err("amount", line, &format!("price 非数字: {price}")));
         }
-        let amount = rec
-            .get(8)
-            .unwrap_or_default()
-            .parse::<u64>()
-            .map_err(|_| row_err("amount", line, &format!("amount 非非负整数: {}", rec.get(8).unwrap_or_default())))?;
-        rows.push(AmountLine { date, model, type_, amount });
+        let amount = rec.get(8).unwrap_or_default().parse::<u64>().map_err(|_| {
+            row_err(
+                "amount",
+                line,
+                &format!("amount 非非负整数: {}", rec.get(8).unwrap_or_default()),
+            )
+        })?;
+        rows.push(AmountLine {
+            date,
+            model,
+            type_,
+            amount,
+        });
     }
     Ok(rows)
 }
@@ -161,13 +188,19 @@ fn parse_cost_csv(text: &str, tz_offset_min: i32) -> Result<Vec<CostLine>, Impor
         let model = rec.get(3).unwrap_or_default().to_string();
         let wallet = rec.get(4).unwrap_or_default().to_string();
         if !["Paid", "Granted"].contains(&wallet.as_str()) {
-            return Err(row_err("cost", line, &format!("未知 wallet_type: {wallet}")));
+            return Err(row_err(
+                "cost",
+                line,
+                &format!("未知 wallet_type: {wallet}"),
+            ));
         }
-        let cost = rec
-            .get(5)
-            .unwrap_or_default()
-            .parse::<f64>()
-            .map_err(|_| row_err("cost", line, &format!("cost 非数字: {}", rec.get(5).unwrap_or_default())))?;
+        let cost = rec.get(5).unwrap_or_default().parse::<f64>().map_err(|_| {
+            row_err(
+                "cost",
+                line,
+                &format!("cost 非数字: {}", rec.get(5).unwrap_or_default()),
+            )
+        })?;
         rows.push(CostLine { date, model, cost });
     }
     Ok(rows)
@@ -180,12 +213,15 @@ fn validate_header(
 ) -> Result<(), ImportError> {
     let headers = reader.headers().map_err(|e| line_err(which, &e))?;
     let actual: Vec<&str> = headers.iter().collect();
-    if actual.len() != expected.len()
-        || actual.iter().zip(expected).any(|(a, e)| a != e)
-    {
+    if actual.len() != expected.len() || actual.iter().zip(expected).any(|(a, e)| a != e) {
         return Err(ImportError::BadHeader(
             which,
-            format!("期望 {} 列,实际 {} 列: {:?}", expected.len(), actual.len(), actual),
+            format!(
+                "期望 {} 列,实际 {} 列: {:?}",
+                expected.len(),
+                actual.len(),
+                actual
+            ),
         ));
     }
     Ok(())
@@ -197,8 +233,7 @@ fn strip_bom(text: &str) -> &str {
 
 /// 平台为 +08:00,换算到采集端本地时区。
 fn parse_date(s: &str, tz_offset_min: i32) -> std::result::Result<String, String> {
-    dates::local_date_from_rfc3339(s, tz_offset_min)
-        .ok_or_else(|| format!("日期格式非法: {s}"))
+    dates::local_date_from_rfc3339(s, tz_offset_min).ok_or_else(|| format!("日期格式非法: {s}"))
 }
 
 /// 补零初始化所有 (date, model) 组合,防止平台省略"命中为 0"的行时高估命中率。

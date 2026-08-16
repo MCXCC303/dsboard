@@ -21,7 +21,9 @@ pub fn init() {
         .with_writer(writer)
         .compact();
 
-    let _ = tracing_subscriber::registry().with(console_layer).try_init();
+    let _ = tracing_subscriber::registry()
+        .with(console_layer)
+        .try_init();
 }
 
 struct PluginWriter<W: Write>(W);

@@ -139,7 +139,9 @@ pub fn app() -> &'static Mutex<App> {
 }
 
 pub fn lock() -> MutexGuard<'static, App> {
-    app().lock().unwrap_or_else(|poisoned| poisoned.into_inner())
+    app()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
 }
 
 /// v0.1.4 输入框 bug 曾把整段事件载荷 JSON(如 `{"type":"input","value":"sk-...",...}`)
@@ -177,9 +179,7 @@ pub fn init_from_disk() {
         }
         // 旧默认包名迁移到手环 0.2.x 的新包名
         if a.settings.push_pkg == LEGACY_DEFAULT_PKG {
-            tracing::info!(
-                "[migrate] push_pkg {LEGACY_DEFAULT_PKG} → {DEFAULT_PKG}"
-            );
+            tracing::info!("[migrate] push_pkg {LEGACY_DEFAULT_PKG} → {DEFAULT_PKG}");
             a.settings.push_pkg = DEFAULT_PKG.into();
             fixed = true;
         }
@@ -242,16 +242,20 @@ pub fn upsert_daily(date: &str, row: DayModelUsage) -> bool {
 
 /// 清理超过 RETAIN_DAYS 的历史数据。
 pub fn prune() {
-    let cutoff_days =
-        crate::dates::unix_now().div_euclid(86_400) - RETAIN_DAYS;
+    let cutoff_days = crate::dates::unix_now().div_euclid(86_400) - RETAIN_DAYS;
     let (cy, cm, cd) = crate::dates::civil_from_days(cutoff_days);
     let cutoff = format!("{cy:04}-{cm:02}-{cd:02}");
     let mut a = lock();
     let before = a.data.days.len();
-    a.data.days.retain(|date, _| date.as_str() >= cutoff.as_str());
+    a.data
+        .days
+        .retain(|date, _| date.as_str() >= cutoff.as_str());
     let after = a.data.days.len();
     if before != after {
-        tracing::info!("[prune] 清理 {} 天历史数据(保留 {after} 天)", before - after);
+        tracing::info!(
+            "[prune] 清理 {} 天历史数据(保留 {after} 天)",
+            before - after
+        );
     }
 }
 

@@ -75,11 +75,7 @@ pub fn local_date_from_rfc3339(s: &str, offset_min: i32) -> Option<String> {
             let oh = num(20, 2)?;
             let om = num(23, 2)?;
             let abs = oh * 60 + om;
-            if b[19] == b'-' {
-                -abs
-            } else {
-                abs
-            }
+            if b[19] == b'-' { -abs } else { abs }
         }
         _ => return None,
     };

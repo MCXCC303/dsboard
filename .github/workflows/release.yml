@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  release:
+    name: Build & publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Cache cargo dependencies
+        uses: Swatinem/rust-cache@v2
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION="${TAG#v}"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Tag: $TAG, Version: $VERSION"
+
+      - name: Sync version into manifest.json & Cargo.toml
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          jq --arg v "$VERSION" '.version = $v' manifest.json > manifest.json.tmp
+          mv manifest.json.tmp manifest.json
+          sed -i "s/^version = .*/version = \"$VERSION\"/" Cargo.toml
+
+      - name: Build wasm (release)
+        run: cargo build --release
+
+      - name: Package .abp plugin
+        run: python3 scripts/build_dist.py --release --package
+
+      - name: Verify package
+        run: |
+          ls -la dist
+          test -f dist/DSBoard.abp
+          unzip -l dist/DSBoard.abp
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: DSBoard ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: |
+            dist/*.abp
+            dist/manifest.json
+          fail_on_unmatched_files: true

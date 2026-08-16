@@ -46,9 +46,7 @@ pub async fn init() {
         let a = state::lock();
         match (&a.device_addr, a.recv_registered) {
             (None, _) => "插件已启动:未连接设备",
-            (Some(_), false) => {
-                "插件已启动:互联接收未注册成功(检查权限,housekeeping 会重试)"
-            }
+            (Some(_), false) => "插件已启动:互联接收未注册成功(检查权限,housekeeping 会重试)",
             (Some(_), true) => "插件已启动:等待手环快应用打开并发送消息",
         }
     };
@@ -73,11 +71,20 @@ pub async fn arm_timers() {
     }
 
     let mut ids = std::collections::BTreeMap::new();
-    ids.insert("push".to_string(), timer::set_interval(push_ms, "push").await);
-    ids.insert("balance".to_string(), timer::set_interval(balance_ms, "balance").await);
+    ids.insert(
+        "push".to_string(),
+        timer::set_interval(push_ms, "push").await,
+    );
+    ids.insert(
+        "balance".to_string(),
+        timer::set_interval(balance_ms, "balance").await,
+    );
     // 导出间隔 0 = 禁用自动导出(仅手动触发),不再布防该定时器
     if export_ms > 0 {
-        ids.insert("export".to_string(), timer::set_interval(export_ms, "export").await);
+        ids.insert(
+            "export".to_string(),
+            timer::set_interval(export_ms, "export").await,
+        );
     }
     ids.insert(
         "housekeeping".to_string(),
@@ -175,9 +182,7 @@ pub async fn refresh_device() {
         match register::register_interconnect_recv(a, &pkg).await {
             Ok(()) => {
                 state::lock().recv_registered = true;
-                tracing::info!(
-                    "[interconnect] 已注册互联接收: {a} {pkg},等待快应用上行消息"
-                );
+                tracing::info!("[interconnect] 已注册互联接收: {a} {pkg},等待快应用上行消息");
             }
             Err(()) => {
                 tracing::warn!(
@@ -230,10 +235,7 @@ pub async fn push_now(force: bool) {
                 && a.last_pushed_signature.as_deref() == Some(signature.as_str())
         };
         if unchanged {
-            tracing::info!(
-                "[push] 快照无变化({} 字节),跳过推送",
-                json.len()
-            );
+            tracing::info!("[push] 快照无变化({} 字节),跳过推送", json.len());
             state::set_status(&format!("快照无变化,跳过推送({} 字节)", json.len()));
             return;
         }
@@ -251,9 +253,7 @@ pub async fn push_now(force: bool) {
             ),
             None => {
                 let installed: Vec<&str> = apps.iter().map(|a| a.package_name.as_str()).collect();
-                tracing::warn!(
-                    "[precheck] 设备 {addr} 未安装 {pkg};已安装快应用: {installed:?}"
-                );
+                tracing::warn!("[precheck] 设备 {addr} 未安装 {pkg};已安装快应用: {installed:?}");
                 state::set_status(&format!(
                     "推送失败:手环未安装 {pkg},请先通过 AstroBox 安装 vela 快应用"
                 ));
@@ -318,7 +318,11 @@ pub async fn backup_to_file() {
     }
     match dialog::save_file_finish(session.session_id).await {
         Ok(()) => {
-            tracing::info!("[backup] 已导出备份 {} 字节 → {}", bytes.len(), session.name);
+            tracing::info!(
+                "[backup] 已导出备份 {} 字节 → {}",
+                bytes.len(),
+                session.name
+            );
             state::set_status(&format!(
                 "备份完成: {} 字节 · 更新插件后请用“从备份恢复”导入",
                 bytes.len()
@@ -410,7 +414,9 @@ pub async fn export_now() {
                 let now = dates::unix_now();
                 state::lock().data.last_import_at = Some(now);
                 state::save_data();
-                state::set_status(&format!("用量导入成功: {days} 天 · {models} 模型 · 替换 {replaced} 行"));
+                state::set_status(&format!(
+                    "用量导入成功: {days} 天 · {models} 模型 · 替换 {replaced} 行"
+                ));
             }
             Err(e) => state::set_status(&format!("CSV 导入失败: {e}")),
         },

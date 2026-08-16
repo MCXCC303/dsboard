@@ -170,22 +170,35 @@ fn build_page() -> ui::Element {
         .padding(16)
         .child(hint("API Key (api.deepseek.com,余额接口):"))
         .child(input(INPUT_API_KEY, &a.settings.api_key))
-        .child(hint("平台 Token (platform.deepseek.com,用量导出,浏览器 F12 复制):"))
+        .child(hint(
+            "平台 Token (platform.deepseek.com,用量导出,浏览器 F12 复制):",
+        ))
         .child(input(INPUT_PLATFORM_TOKEN, &a.settings.platform_token))
         .child(hint("手环快应用包名:"))
         .child(input(INPUT_PUSH_PKG, &a.settings.push_pkg))
         .child(hint("推送间隔(秒,默认 60):"))
-        .child(input(INPUT_PUSH_INTERVAL, &a.settings.push_interval_secs.to_string()))
+        .child(input(
+            INPUT_PUSH_INTERVAL,
+            &a.settings.push_interval_secs.to_string(),
+        ))
         .child(hint("余额轮询间隔(秒,默认 60):"))
-        .child(input(INPUT_BALANCE_INTERVAL, &a.settings.balance_interval_secs.to_string()))
+        .child(input(
+            INPUT_BALANCE_INTERVAL,
+            &a.settings.balance_interval_secs.to_string(),
+        ))
         .child(hint("自动导出间隔(秒,默认 60,0=禁用自动导出):"))
-        .child(input(INPUT_EXPORT_INTERVAL, &a.settings.export_interval_secs.to_string()))
+        .child(input(
+            INPUT_EXPORT_INTERVAL,
+            &a.settings.export_interval_secs.to_string(),
+        ))
         .child(btn("保存设置", BTN_SAVE_SETTINGS))
         .child(btn("立即查余额", BTN_BALANCE_NOW))
         .child(btn("导出并导入", BTN_EXPORT_NOW))
         .child(btn("推送手环", BTN_PUSH_NOW))
         .child(btn("检测设备", BTN_HOUSEKEEPING))
-        .child(hint("跨版本持久化(宿主更新插件会清空插件目录,更新前备份、更新后恢复):"))
+        .child(hint(
+            "跨版本持久化(宿主更新插件会清空插件目录,更新前备份、更新后恢复):",
+        ))
         .child(btn("备份配置/数据", BTN_BACKUP))
         .child(btn("从备份恢复", BTN_RESTORE))
         .child(p(&status_line));

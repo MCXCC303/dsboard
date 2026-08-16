@@ -1,5 +1,7 @@
 # DSBoard - AstroBox v2 插件
 
+[![CI](https://github.com/MCXCC303/dsboard/actions/workflows/ci.yml/badge.svg)](https://github.com/MCXCC303/dsboard/actions/workflows/ci.yml)
+
 ## 编译
 
 ### 依赖

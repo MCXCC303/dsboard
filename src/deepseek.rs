@@ -5,7 +5,7 @@
 
 use std::time::Duration;
 
-use anyhow::{anyhow, Context, Result};
+use anyhow::{Context, Result, anyhow};
 use serde_json::Value;
 use waki::Client;
 
@@ -19,7 +19,11 @@ pub const TZ_SEC: i64 = 28_800;
 const USER_AGENT: &str = "Mozilla/5.0 (X11; Linux x86_64; rv:152.0) Gecko/20100101 Firefox/152.0";
 
 /// 失败返回 Ok(None)(接口不可用),不拖垮整体链路;网络/解析错误返回 Err。
-pub fn fetch_balance(base_url: &str, api_key: &str, checked_at: i64) -> Result<Option<BalanceInfo>> {
+pub fn fetch_balance(
+    base_url: &str,
+    api_key: &str,
+    checked_at: i64,
+) -> Result<Option<BalanceInfo>> {
     let url = format!("{}{}", base_url.trim_end_matches('/'), BALANCE_PATH);
     let resp = Client::new()
         .get(&url)
@@ -111,7 +115,12 @@ fn as_f64(v: &Value) -> Option<f64> {
 }
 
 /// 下载用量导出 zip。非 zip 响应(错误 JSON)转成带错误码提示的 Err。
-pub fn fetch_export_zip(platform_base: &str, token: &str, start_sec: i64, end_sec: i64) -> Result<Vec<u8>> {
+pub fn fetch_export_zip(
+    platform_base: &str,
+    token: &str,
+    start_sec: i64,
+    end_sec: i64,
+) -> Result<Vec<u8>> {
     let url = format!(
         "{}{}?start={start_sec}&end={end_sec}&tz={TZ_SEC}",
         platform_base.trim_end_matches('/'),
@@ -152,7 +161,11 @@ pub fn fetch_export_zip(platform_base: &str, token: &str, start_sec: i64, end_se
             .and_then(Value::as_i64)
             .unwrap_or(-1);
         let msg = biz_msg
-            .or_else(|| body.get("msg").and_then(Value::as_str).filter(|s| !s.is_empty()))
+            .or_else(|| {
+                body.get("msg")
+                    .and_then(Value::as_str)
+                    .filter(|s| !s.is_empty())
+            })
             .or_else(|| {
                 body.get("error")
                     .and_then(|e| e.get("message").or(Some(e)))
@@ -183,7 +196,9 @@ fn export_error_hint(status: u16, code: i64, biz_code: i64) -> &'static str {
         (_, 40002, _) => "缺少 token",
         (_, 40029, _) => "IP 访问受限(40029),请更换网络后重试",
         (429, _, _) | (_, 429, _) => "请求过于频繁或触发反爬,稍后重试",
-        (_, _, 1) => "INVALID_PARAM:start/end 必须为本地 0 点对齐的整点边界(已自动对齐,若仍报错请反馈)",
+        (_, _, 1) => {
+            "INVALID_PARAM:start/end 必须为本地 0 点对齐的整点边界(已自动对齐,若仍报错请反馈)"
+        }
         (403, _, _) => "HTTP 403:访问被拒绝,检查 token 权限/网络环境",
         (404, _, _) => "HTTP 404:导出接口不存在,检查 platform_base 配置",
         (s, _, _) if s >= 500 => "平台服务端错误,稍后重试",
@@ -214,7 +229,11 @@ mod tests {
     fn default_window_aligns_to_local_midnight() {
         // 宿主时区 +08:00:本地 0 点 = epoch 秒 + 28800 后能被 86400 整除
         let (start, end) = default_window(30, 480);
-        assert_eq!((start + 28_800).rem_euclid(86_400), 0, "start 须为本地 0 点");
+        assert_eq!(
+            (start + 28_800).rem_euclid(86_400),
+            0,
+            "start 须为本地 0 点"
+        );
         assert_eq!((end + 28_800).rem_euclid(86_400), 0, "end 须为本地 0 点");
         // end 为次日 0 点,窗口覆盖 30 个自然日
         assert_eq!(end - start, 30 * 86_400);
