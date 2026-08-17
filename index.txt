@@ -1,0 +1,3 @@
+release
+# To avoid ci conflicts this folder may not contain latest release wasm products
+# I actucally don't like this puller way, why not gh release?
